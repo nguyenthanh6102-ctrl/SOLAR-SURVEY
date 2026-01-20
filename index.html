@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Solar Survey Pro - Multi-Image Support</title>
+  <title>Solar Survey Pro - Multi-Image & Text Note</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -12,8 +12,8 @@
 <body>
 
 <div class="container viewer-section no-print">
-  <h2 style="margin-top:0; color:#1a5276;">📖 Nhập dữ liệu cũ</h2>
-  <input type="file" accept=".json" onchange="importData(this)" style="padding:10px;">
+  <h2 style="margin-top:0; color:#1a5276;">📖 Nhập dữ liệu cũ (.json)</h2>
+  <input type="file" accept=".json" onchange="importData(this)">
 </div>
 
 <div class="container" id="mainApp">
@@ -51,23 +51,23 @@
     </section>
 
     <section>
-      <h2>🏗️ 2. Hình ảnh & Ghi chú kỹ thuật</h2>
+      <h2>🏗️ 2. Hình ảnh & Ghi chú (Chọn nhiều ảnh)</h2>
       <div class="field-group">
-        <label>Tổng thể khu vực, mái & Lối lên (Có thể chọn nhiều ảnh):</label>
+        <label>Vị trí lên mái & Lối đi:</label>
         <input type="text" name="roofNote" placeholder="Ghi chú về lối đi...">
         <input type="file" accept="image/*" capture="environment" class="no-print" onchange="handlePreview(this)" data-name="img_roof" multiple>
         <div id="area_img_roof" class="markup-wrapper"></div>
       </div>
 
       <div class="field-group">
-        <label>Vị trí lắp đặt Inverter (Có thể chọn nhiều ảnh):</label>
+        <label>Vị trí lắp đặt Inverter:</label>
         <input type="text" name="invNote" placeholder="Ghi chú vị trí lắp...">
         <input type="file" accept="image/*" capture="environment" class="no-print" onchange="handlePreview(this)" data-name="img_inv" multiple>
         <div id="area_img_inv" class="markup-wrapper"></div>
       </div>
 
       <div class="field-group">
-        <label>Điểm đấu nối điện tổng (Có thể chọn nhiều ảnh):</label>
+        <label>Điểm đấu nối điện tổng:</label>
         <input type="text" name="meterNote" placeholder="Ghi chú điểm đấu nối...">
         <input type="file" accept="image/*" capture="environment" class="no-print" onchange="handlePreview(this)" data-name="img_meter" multiple>
         <div id="area_img_meter" class="markup-wrapper"></div>
