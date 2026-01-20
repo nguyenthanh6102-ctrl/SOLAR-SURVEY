@@ -1,0 +1,48 @@
+body {
+  margin: 0; font-family: 'Segoe UI', Arial, sans-serif;
+  background: url('bg.jpg') no-repeat center center fixed; background-size: cover;
+}
+.container {
+  background: rgba(255, 255, 255, 0.98); max-width: 700px; margin: 15px auto;
+  padding: 20px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+}
+.viewer-section { border: 2px dashed #2980b9; background: rgba(235, 245, 251, 0.98); }
+h1 { text-align: center; color: #1a5276; font-size: 1.4rem; margin: 10px 0; }
+h2 { color: #d35400; border-left: 4px solid #d35400; padding-left: 10px; font-size: 1.1rem; margin-top: 20px; }
+section { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
+.field-group { margin-bottom: 15px; border-bottom: 1px solid #f5f5f5; padding-bottom: 10px; }
+.row { display: flex; gap: 10px; align-items: flex-end; }
+.row > div { flex: 1; }
+label { font-weight: bold; display: block; margin-top: 10px; font-size: 0.9rem; }
+input[type="number"], input[type="text"], select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+.preview { margin-top: 10px; text-align: center; }
+.preview img { max-width: 100%; max-height: 250px; border-radius: 5px; border: 1px solid #ddd; display: block; margin: 0 auto; }
+.result-box { background: #1a5276; color: #fff; padding: 15px; text-align: center; border-radius: 8px; margin-top: 15px; }
+#instantPowerDisplay { color: #f1c40f; font-weight: bold; font-size: 1.5rem; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+button { padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+.btn-save { background: #27ae60; color: white; }
+.btn-export { background: #2980b9; color: white; }
+.btn-pdf { grid-column: span 2; background: #c0392b; color: white; }
+
+/* Nút Word Mới */
+.btn-word { width: 100%; background: #2b579a; color: white; margin-top: 10px; }
+.btn-word:hover { background: #1e3f72; }
+
+.note { font-size: 0.8rem; color: #666; margin-bottom: 10px; }
+
+/* PRINT MODE (Cho xuất PDF Ảnh) */
+.print-mode {
+  position: relative; width: 794px !important; min-width: 794px !important; max-width: 794px !important;
+  margin: 0 !important; padding: 20px !important; background: white !important; color: #000 !important;
+  font-family: 'Times New Roman', serif;
+}
+.print-mode section { border: 1px solid #333; margin-bottom: 15px; padding: 10px; background: white !important; border-radius: 0 !important; }
+.print-mode .no-print, .print-mode .actions, .print-mode .viewer-section, .print-mode input[type="file"], .print-mode button { display: none !important; }
+.print-mode .print-header { display: block !important; }
+.print-mode .report-title { font-size: 18pt; margin-bottom: 5px; text-decoration: underline; color: #000 !important; }
+.print-mode .print-value { display: block; font-weight: bold; font-size: 13pt; color: #000; padding: 5px 0; border-bottom: 1px dotted #888; margin-bottom: 5px; min-height: 20px; }
+.print-mode input, .print-mode select { display: none !important; }
+.print-mode .preview img { max-width: 95% !important; max-height: 300px !important; border: 1px solid #000; margin: 10px auto; }
+.print-mode .result-box { background: #eee !important; color: #000 !important; border: 2px solid #000; }
+.print-mode #instantPowerDisplay { color: #000 !important; }
