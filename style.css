@@ -2,21 +2,19 @@
 body { 
   margin: 0; 
   font-family: 'Segoe UI', Arial, sans-serif; 
-  /* ẢNH NỀN PHÍA DƯỚI */
   background: url('nen.jpg') no-repeat center center fixed; 
   background-size: cover;
   color: #333; 
 }
 
 .container { 
-  /* ĐỘ TRONG SUỐT NHẸ ĐỂ THẤY NỀN */
   background: rgba(255, 255, 255, 0.9); 
   max-width: 700px; 
   margin: 20px auto; 
   padding: 25px; 
   border-radius: 15px; 
   box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
-  backdrop-filter: blur(8px); /* Hiệu ứng mờ kính */
+  backdrop-filter: blur(8px);
 }
 
 .viewer-section { border: 2px dashed #2980b9; background: rgba(235, 245, 251, 0.8); margin-bottom: 10px; }
@@ -25,7 +23,6 @@ h1 { text-align: center; color: #1a5276; font-size: 1.6rem; margin-bottom: 25px;
 h2 { color: #d35400; border-left: 5px solid #d35400; padding-left: 12px; font-size: 1.2rem; margin: 25px 0 15px; }
 section { background: rgba(255, 255, 255, 0.7); padding: 20px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 20px; }
 
-/* Ô nhập liệu chuyên nghiệp */
 .field-group { margin-bottom: 18px; }
 label { font-weight: 600; display: block; margin-bottom: 8px; color: #2c3e50; }
 input[type="number"], input[type="text"], select { 
@@ -33,47 +30,50 @@ input[type="number"], input[type="text"], select {
   background: rgba(255, 255, 255, 0.9);
 }
 
-/* THU NHỎ KÍCH THƯỚC ẢNH UPLOAD */
-.markup-wrapper { margin-top: 10px; }
-.markup-container { border: 1px solid #ddd; border-radius: 8px; background: #2d3436; overflow: hidden; }
+/* KHU VỰC CHỨA NHIỀU ẢNH */
+.markup-wrapper { 
+  margin-top: 10px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 20px; /* Khoảng cách giữa các ảnh */
+}
+
+.markup-container { 
+  border: 1px solid #ddd; 
+  border-radius: 8px; 
+  background: #2d3436; 
+  overflow: hidden; 
+  position: relative;
+}
+
 .canvas-wrapper { 
   width: 100%; 
   display: flex; 
   justify-content: center; 
   background: #333;
-  max-height: 350px; /* KHÔNG CHO ẢNH QUÁ TO */
+  max-height: 400px;
 }
-canvas { max-width: 100%; max-height: 350px; object-fit: contain; }
+canvas { max-width: 100%; max-height: 400px; object-fit: contain; cursor: crosshair; }
 
-/* Nút công cụ */
-.markup-toolbar { display: flex; background: #f8f9fa; padding: 6px; gap: 6px; border-bottom: 1px solid #ddd; }
-.tool-btn { flex: 1; padding: 10px; font-size: 13px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; font-weight: bold; }
+/* Thanh công cụ */
+.markup-toolbar { display: flex; background: #f8f9fa; padding: 6px; gap: 6px; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
+.tool-btn { flex: 1; min-width: 70px; padding: 10px; font-size: 13px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; font-weight: bold; }
 .tool-btn.active { background: #e74c3c; color: white; border-color: #c0392b; }
+.btn-del-img { background: #636e72; color: white; border: none; }
 
-.result-box { background: #1a5276; color: #fff; padding: 18px; text-align: center; border-radius: 10px; font-size: 1.1rem; }
+.result-box { background: #1a5276; color: #fff; padding: 18px; text-align: center; border-radius: 10px; }
 #instantPowerDisplay { color: #f1c40f; font-size: 1.8rem; font-weight: bold; }
 
 .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; }
-button { padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+button { padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 .btn-save { background: #27ae60; color: white; }
 .btn-export { background: #2980b9; color: white; }
 .btn-pdf { background: #c0392b; color: white; }
 
-/* --- CẤU TRÚC PDF --- */
-.print-header { display: none; } /* Mặc định ẩn trên web */
-
-.pdf-mode { 
-  width: 794px !important; /* Cố định chiều rộng A4 */
-  margin: 0 !important; 
-  padding: 30px !important; 
-  background: white !important; 
-  box-shadow: none !important; 
-}
+/* PDF CẤU TRÚC */
+.print-header { display: none; }
+.pdf-mode { width: 794px !important; margin: 0 !important; padding: 30px !important; background: white !important; box-shadow: none !important; }
 .pdf-mode .no-print { display: none !important; }
-.pdf-mode .print-header { 
-  display: block !important; 
-  border-bottom: 3px solid #009444; 
-  margin-bottom: 20px; 
-  padding-bottom: 10px; 
-}
+.pdf-mode .print-header { display: block !important; border-bottom: 3px solid #009444; margin-bottom: 20px; padding-bottom: 10px; }
 .pdf-mode section { background: white !important; border: 1px solid #eee; }
+.pdf-mode .markup-container { border: 1px solid #ccc; }
