@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Solar Survey Pro - Word Export</title>
+  <title>Solar Survey Pro - GP Solar</title>
   <link rel="stylesheet" href="style.css">
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -16,11 +16,11 @@
 
 <div class="container viewer-section no-print">
   <h2>📖 Xem lại & Xuất báo cáo</h2>
-  <p class="note">Bước 1: Chọn file .json đã lưu trước đó</p>
+  <p class="note">Chọn file .json để xem lại dữ liệu và tải file Word</p>
   <input type="file" id="importFile" accept=".json" onchange="importData(this)">
   
   <div id="wordActions" style="display:none; margin-top:15px; border-top:1px dashed #2980b9; padding-top:15px;">
-      <p style="color: green; font-weight: bold; margin-bottom: 5px;">✅ Đã đọc dữ liệu thành công!</p>
+      <p style="color: #27ae60; font-weight: bold;">✅ Đã nhận dữ liệu!</p>
       <button type="button" class="btn-word" onclick="generateWord()">📝 TẢI FILE WORD (.DOCX)</button>
   </div>
 </div>
@@ -28,19 +28,15 @@
 <div class="container" id="mainApp">
   <div class="print-header" style="display: none;">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #009444; padding-bottom: 15px; margin-bottom: 20px;">
-        <div style="flex: 0 0 160px;">
-            <img src="GP logo.png" alt="GP Solar Logo" style="width: 100%; height: auto; object-fit: contain;">
-        </div>
+        <div style="flex: 0 0 160px;"><img src="GP logo.png" alt="Logo" style="width: 100%;"></div>
         <div style="text-align: right; flex: 1; padding-left: 20px;">
-            <h3 style="margin: 0; color: #009444; font-size: 14pt; text-transform: uppercase; font-weight: bold;">CÔNG TY TNHH CÔNG NGHỆ GP SOLAR</h3>
-            <p style="margin: 5px 0; font-size: 11pt; color: #333; font-style: italic;">Power for life</p>
-            <p style="margin: 0; font-size: 10pt; color: #666;">Biên bản khảo sát hiện trường lắp đặt điện mặt trời</p>
+            <h3 style="margin: 0; color: #009444; font-size: 14pt;">CÔNG TY TNHH CÔNG NGHỆ GP SOLAR</h3>
+            <p style="margin: 5px 0; font-style: italic;">Power for life</p>
         </div>
     </div>
   </div>
 
   <h1 class="report-title">📋 NHẬT KÝ KHẢO SÁT SOLAR</h1>
-  <p id="printTimestamp" style="text-align: center; font-style: italic; color: #555; margin-bottom: 20px; display: none;"></p>
 
   <form id="surveyForm">
     <section>
@@ -53,6 +49,7 @@
           </select>
       </div>
       <div id="inputAmperage"></div>
+      
       <div id="calcResult" class="result-box">
         Công suất tức thời: <span id="instantPowerDisplay">0</span> kW
       </div>
@@ -62,7 +59,7 @@
       <h2>🏗️ 2. Hiện trạng & Vị trí lắp đặt</h2>
       <div class="field-group">
         <label>Tiền điện trung bình (VNĐ/tháng):</label>
-        <input type="number" name="monthlyBill" placeholder="Ví dụ: 2000000">
+        <input type="number" name="monthlyBill" placeholder="Ví dụ: 2000000" inputmode="numeric">
       </div>
       <div class="field-group">
         <label>Vị trí lên mái (Thang, lối đi...):</label>
