@@ -1,220 +1,176 @@
 window.onload = togglePhase;
+const canvasStates = {};
 
-// 1. Quản lý các ô nhập Ampe (Tối ưu di động)
+// 1. QUẢN LÝ Ô NHẬP AMPE
 function togglePhase() {
   const phase = document.getElementById('phase').value;
   const container = document.getElementById('inputAmperage');
   container.innerHTML = '';
-  
   const ids = phase === "1" ? ["1"] : ["A", "B", "C"];
-  const labels = phase === "1" ? ["Dòng điện (A)"] : ["Dòng Pha A (A)", "Dòng Pha B (A)", "Dòng Pha C (A)"];
-
-  ids.forEach((id, index) => {
+  ids.forEach(id => {
     const div = document.createElement('div');
     div.className = "field-group";
     div.innerHTML = `
-      <div class="row">
-        <div>
-          <label>${labels[index]}:</label>
-          <input type="number" name="ampere${id}" class="amp-input" oninput="calcPower()" placeholder="0" inputmode="decimal">
-        </div>
-        <div class="no-print">
-          <label>Ảnh đo ${id}:</label>
-          <input type="file" accept="image/*" capture="environment" class="img-input" data-name="img_amp${id}" onchange="handlePreview(this)">
-        </div>
+      <div style="display:flex; gap:12px; margin-bottom:8px;">
+        <div style="flex:1"><label>Ampe Pha ${id}:</label>
+        <input type="number" name="ampere${id}" class="amp-input" oninput="calcPower()" placeholder="0" inputmode="decimal"></div>
+        <div style="flex:1" class="no-print"><label>Ảnh đo ${id}:</label>
+        <input type="file" accept="image/*" capture="environment" onchange="handlePreview(this)" data-name="img_amp${id}"></div>
       </div>
-      <div class="preview" id="prev_img_amp${id}"></div>`;
+      <div id="area_img_amp${id}" class="markup-wrapper"></div>`;
     container.appendChild(div);
   });
 }
 
 function calcPower() {
-  let totalAmp = 0;
-  document.querySelectorAll('.amp-input').forEach(i => totalAmp += Number(i.value) || 0);
-  document.getElementById('instantPowerDisplay').innerText = ((totalAmp * 220) / 1000).toFixed(2);
+  let total = 0;
+  document.querySelectorAll('.amp-input').forEach(i => total += Number(i.value) || 0);
+  document.getElementById('instantPowerDisplay').innerText = ((total * 220) / 1000).toFixed(2);
 }
 
+// 2. XỬ LÝ VẼ VÀ PREVIEW
 function handlePreview(input) {
-  const previewDiv = document.getElementById("prev_" + input.getAttribute('data-name'));
-  previewDiv.innerHTML = '';
-  if (input.files && input.files[0]) {
-    const reader = new FileReader();
-    reader.onload = (e) => { previewDiv.innerHTML = `<img src="${e.target.result}">`; };
-    reader.readAsDataURL(input.files[0]);
-  }
-}
+  const name = input.getAttribute('data-name');
+  const area = document.getElementById("area_" + name);
+  if (!input.files[0]) return;
 
-// 2. Nén ảnh Base64
-async function processImage(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * (MAX_WIDTH / img.width);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
-      };
-    };
-  });
-}
-
-// 3. Lưu & Xuất JSON
-document.getElementById('surveyForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const btn = e.target.querySelector('.btn-save');
-  btn.innerText = "⏳ ĐANG XỬ LÝ...";
-  const data = { phase: document.getElementById('phase').value };
-  const formData = new FormData(this);
-  formData.forEach((v, k) => { if (typeof v === 'string') data[k] = v; });
-  data.instantPower = document.getElementById('instantPowerDisplay').innerText;
-  
-  const fileInputs = document.querySelectorAll('.img-input');
-  for (let input of fileInputs) {
-    if (input.files[0]) data[input.getAttribute('data-name')] = await processImage(input.files[0]);
-  }
-  
-  localStorage.setItem("solar_survey_cache", JSON.stringify(data));
-  alert("Đã lưu tạm dữ liệu!");
-  btn.innerText = "💾 LƯU DỮ LIỆU TẠM";
-});
-
-function exportData() {
-  const data = localStorage.getItem("solar_survey_cache");
-  if (!data) return alert("Hãy Lưu trước khi xuất!");
-  const blob = new Blob([data], { type: "application/json" });
-  saveAs(blob, `Survey_Data_${new Date().getTime()}.json`);
-}
-
-// 4. Import & Xuất Word
-let loadedJsonData = null;
-function importData(input) {
   const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      loadedJsonData = JSON.parse(e.target.result);
-      document.getElementById('wordActions').style.display = 'block';
-      // Fill ngược vào form
-      const data = loadedJsonData;
-      document.getElementById('phase').value = data.phase;
-      togglePhase();
-      setTimeout(() => {
-        for (let key in data) {
-          const field = document.querySelector(`[name="${key}"]`);
-          if (field) field.value = data[key];
-          if (key.startsWith('img_') && data[key]) {
-            const div = document.getElementById("prev_" + key);
-            if (div) div.innerHTML = `<img src="${data[key]}">`;
-          }
-        }
-        document.getElementById('instantPowerDisplay').innerText = data.instantPower;
-      }, 300);
-    } catch(err) { alert("Lỗi đọc file JSON!"); }
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      area.innerHTML = `
+        <div class="markup-container">
+          <div class="markup-toolbar">
+            <button type="button" class="tool-btn active" onclick="setTool('${name}','pen',this)">🖊️ Bút đỏ</button>
+            <button type="button" class="tool-btn" onclick="setTool('${name}','rect',this)">🔲 Khung</button>
+            <button type="button" class="tool-btn" onclick="clearCanvas('${name}')">🧹 Xóa vẽ</button>
+          </div>
+          <div class="canvas-wrapper"><canvas id="canvas_${name}"></canvas></div>
+        </div>`;
+      const canvas = document.getElementById(`canvas_${name}`);
+      const ctx = canvas.getContext('2d');
+      const scale = Math.min(1, 1000 / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvasStates[name] = { canvas, ctx, originalImg: img, tool: 'pen', isDrawing: false };
+      setupDrawing(name);
+    };
+    img.src = e.target.result;
   };
-  reader.readAsText(input.files[0]);
+  reader.readAsDataURL(input.files[0]);
 }
 
-async function generateWord() {
-  if (!loadedJsonData) return;
-  const btn = document.querySelector('.btn-word');
-  btn.innerText = "⏳ Đang tạo file...";
-  
-  const { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = docx;
-
-  function createImg(base64, width = 450) {
-    if (!base64) return new Paragraph({ text: "(Không có ảnh)", italic: true });
-    const imageBuffer = Uint8Array.from(atob(base64.split(',')[1]), c => c.charCodeAt(0));
-    return new Paragraph({
-      children: [new ImageRun({ data: imageBuffer, transformation: { width, height: width * 0.75 } })],
-      alignment: AlignmentType.CENTER, spacing: { before: 200, after: 200 }
-    });
-  }
-
-  const children = [
-    new Paragraph({ text: "CÔNG TY TNHH CÔNG NGHỆ GP SOLAR", heading: HeadingLevel.HEADING_3 }),
-    new Paragraph({ text: "NHẬT KÝ KHẢO SÁT HIỆN TRƯỜNG", heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER, spacing: { before: 400, after: 400 } }),
-    new Paragraph({ children: [new TextRun({ text: "Thời gian: ", bold: true }), new TextRun(new Date().toLocaleString())] }),
-    new Paragraph({ children: [new TextRun({ text: "Tiền điện TB: ", bold: true }), new TextRun(loadedJsonData.monthlyBill + " VNĐ")] }),
-    
-    new Paragraph({ text: "1. THÔNG SỐ ĐIỆN", heading: HeadingLevel.HEADING_2, spacing: { before: 400 } }),
-  ];
-
-  // Bảng Ampe
-  const rows = [new TableRow({ children: [
-    new TableCell({ children: [new Paragraph({ text: "Hạng mục", bold: true })] }),
-    new TableCell({ children: [new Paragraph({ text: "Giá trị (A)", bold: true })] }),
-    new TableCell({ children: [new Paragraph({ text: "Hình ảnh", bold: true })] })
-  ]})];
-
-  const ampeIds = loadedJsonData.phase === "1" ? ["1"] : ["A", "B", "C"];
-  ampeIds.forEach(id => {
-    rows.push(new TableRow({ children: [
-      new TableCell({ children: [new Paragraph("Pha " + id)] }),
-      new TableCell({ children: [new Paragraph(loadedJsonData["ampere" + id] || "0")] }),
-      new TableCell({ children: [createImg(loadedJsonData["img_amp" + id], 120)] })
-    ]}));
-  });
-  children.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
-  children.push(new Paragraph({ children: [new TextRun({ text: `=> Tổng công suất tiêu thụ: ${loadedJsonData.instantPower} kW`, bold: true, color: "FF0000" })], spacing: { before: 200 } }));
-
-  // Ảnh hiện trường
-  children.push(new Paragraph({ text: "2. HÌNH ẢNH HIỆN TRƯỜNG", heading: HeadingLevel.HEADING_2, spacing: { before: 400 } }));
-  const sections = [
-    { l: "Lối lên mái", n: "roofAccessNote", i: "img_roof_access" },
-    { l: "Vị trí Inverter", n: "inverterLocation", i: "img_inverter" },
-    { l: "Đường dây điện", n: "cableLength", i: "img_cable_route" },
-    { l: "Kết cấu mái", n: "roofStructure", i: "img_roof_structure" }
-  ];
-
-  sections.forEach(s => {
-    children.push(new Paragraph({ text: `• ${s.l}:`, bold: true, spacing: { before: 200 } }));
-    children.push(new Paragraph({ text: "Ghi chú: " + (loadedJsonData[s.n] || "N/A") }));
-    children.push(createImg(loadedJsonData[s.i], 450));
-  });
-
-  const doc = new Document({ sections: [{ children }] });
-  Packer.toBlob(doc).then(blob => {
-    saveAs(blob, `BaoCao_Solar_Word_${new Date().getTime()}.docx`);
-    btn.innerText = "📝 TẢI FILE WORD (.DOCX)";
-  });
+function setupDrawing(name) {
+  const s = canvasStates[name];
+  const cv = s.canvas;
+  const getPos = (e) => {
+    const r = cv.getBoundingClientRect();
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (x - r.left) * (cv.width / r.width), y: (y - r.top) * (cv.height / r.height) };
+  };
+  const start = (e) => {
+    s.isDrawing = true; const p = getPos(e); s.startX = p.x; s.startY = p.y;
+    s.ctx.strokeStyle = "red"; s.ctx.lineWidth = 5; s.ctx.beginPath(); s.ctx.moveTo(p.x, p.y);
+    s.snapshot = s.ctx.getImageData(0, 0, cv.width, cv.height);
+  };
+  const move = (e) => {
+    if (!s.isDrawing) return; const p = getPos(e);
+    if (s.tool === 'pen') { s.ctx.lineTo(p.x, p.y); s.ctx.stroke(); } 
+    else { s.ctx.putImageData(s.snapshot, 0, 0); s.ctx.strokeRect(s.startX, s.startY, p.x - s.startX, p.y - s.startY); }
+  };
+  cv.addEventListener('mousedown', start); cv.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', () => s.isDrawing = false);
+  cv.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); }, {passive:false});
+  cv.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); }, {passive:false});
 }
 
-// 5. Xuất PDF Ảnh (Giữ nguyên logic cũ)
+function setTool(n, t, b) {
+  canvasStates[n].tool = t;
+  b.parentElement.querySelectorAll('.tool-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+}
+
+function clearCanvas(n) {
+  const s = canvasStates[n];
+  s.ctx.drawImage(s.originalImg, 0, 0, s.canvas.width, s.canvas.height);
+}
+
+// 3. XUẤT PDF ĐA TRANG CÓ LOGO
 async function exportPDF() {
-  const btn = document.getElementById('btnExportPDF');
-  btn.innerText = "⏳ Đang tạo PDF..."; btn.disabled = true;
+  const btn = document.querySelector('.btn-pdf');
+  btn.innerText = "⏳ ĐANG TẠO PDF...";
   const element = document.getElementById('mainApp');
-  const clone = element.cloneNode(true);
-  clone.classList.add('print-mode');
-  
-  const orgInputs = element.querySelectorAll('input, select');
-  clone.querySelectorAll('input, select').forEach((inp, i) => {
-    if(inp.type === 'file') return;
-    const div = document.createElement('div'); div.className = 'print-value';
-    div.innerText = (inp.tagName === 'SELECT' ? orgInputs[i].options[orgInputs[i].selectedIndex].text : orgInputs[i].value) || "...";
-    inp.parentNode.replaceChild(div, inp);
-  });
-
-  const wrapper = document.createElement('div');
-  wrapper.style.position = 'absolute'; wrapper.style.left = '-9999px';
-  wrapper.appendChild(clone); document.body.appendChild(wrapper);
+  element.classList.add('pdf-mode');
 
   try {
-    const canvas = await html2canvas(clone, { scale: 2, useCORS: true });
-    const imgData = canvas.toDataURL('image/jpeg', 0.9);
+    const canvas = await html2canvas(element, {
+      scale: 2, 
+      useCORS: true,
+      windowWidth: 794 
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-    const imgH = (canvas.height * 210) / canvas.width;
-    let hLeft = imgH, pos = 0;
-    pdf.addImage(imgData, 'JPEG', 0, pos, 210, imgH);
-    hLeft -= 297;
-    while (hLeft > 0) { pos -= 297; hLeft -= 297; pdf.addPage(); pdf.addImage(imgData, 'JPEG', 0, pos, 210, imgH); }
-    pdf.save(`BaoCao_Anh_${new Date().getTime()}.pdf`);
-  } catch(e) { console.error(e); }
-  document.body.removeChild(wrapper);
-  btn.innerText = "📄 XUẤT ẢNH BÁO CÁO (PDF)"; btn.disabled = false;
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= 297;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= 297;
+    }
+    pdf.save(`Survey_GP_Solar_${Date.now()}.pdf`);
+  } catch (err) {
+    alert("Lỗi xuất PDF: " + err);
+  } finally {
+    element.classList.remove('pdf-mode');
+    btn.innerText = "📄 XUẤT PDF BÁO CÁO";
+  }
+}
+
+// 4. LƯU & XUẤT JSON
+function exportData() {
+  const data = { phase: document.getElementById('phase').value, power: document.getElementById('instantPowerDisplay').innerText };
+  document.querySelectorAll('input[type="text"], input[type="number"]').forEach(i => data[i.name] = i.value);
+  for (let key in canvasStates) { data[key] = canvasStates[key].canvas.toDataURL('image/jpeg', 0.8); }
+  saveAs(new Blob([JSON.stringify(data)], {type: "application/json"}), `SolarData_${Date.now()}.json`);
+}
+
+function importData(inp) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = JSON.parse(e.target.result);
+    document.getElementById('phase').value = data.phase; togglePhase();
+    setTimeout(() => {
+      for (let k in data) {
+        const f = document.querySelector(`[name="${k}"]`); if(f) f.value = data[k];
+        if (k.startsWith('img_') && data[k]) {
+          const area = document.getElementById("area_" + k);
+          const img = new Image();
+          img.onload = () => handlePreviewFromData(k, area, img);
+          img.src = data[k];
+        }
+      }
+    }, 300);
+  };
+  reader.readAsText(inp.files[0]);
+}
+
+function handlePreviewFromData(name, area, img) {
+    area.innerHTML = `<div class="markup-container"><div class="markup-toolbar"><button type="button" class="tool-btn active" onclick="setTool('${name}','pen',this)">🖊️</button><button type="button" class="tool-btn" onclick="clearCanvas('${name}')">🧹</button></div><div class="canvas-wrapper"><canvas id="canvas_${name}"></canvas></div></div>`;
+    const canvas = document.getElementById(`canvas_${name}`);
+    const ctx = canvas.getContext('2d');
+    canvas.width = img.width; canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    canvasStates[name] = { canvas, ctx, originalImg: img, tool: 'pen', isDrawing: false };
+    setupDrawing(name);
 }
