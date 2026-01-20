@@ -31,33 +31,14 @@ input[type="number"], input[type="text"], select {
 }
 
 /* KHU VỰC CHỨA NHIỀU ẢNH */
-.markup-wrapper { 
-  margin-top: 10px; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 20px; /* Khoảng cách giữa các ảnh */
-}
-
-.markup-container { 
-  border: 1px solid #ddd; 
-  border-radius: 8px; 
-  background: #2d3436; 
-  overflow: hidden; 
-  position: relative;
-}
-
-.canvas-wrapper { 
-  width: 100%; 
-  display: flex; 
-  justify-content: center; 
-  background: #333;
-  max-height: 400px;
-}
-canvas { max-width: 100%; max-height: 400px; object-fit: contain; cursor: crosshair; }
+.markup-wrapper { margin-top: 10px; display: flex; flex-direction: column; gap: 20px; }
+.markup-container { border: 1px solid #ddd; border-radius: 8px; background: #2d3436; overflow: hidden; position: relative; }
+.canvas-wrapper { width: 100%; display: flex; justify-content: center; background: #333; max-height: 450px; }
+canvas { max-width: 100%; max-height: 450px; object-fit: contain; cursor: crosshair; }
 
 /* Thanh công cụ */
-.markup-toolbar { display: flex; background: #f8f9fa; padding: 6px; gap: 6px; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
-.tool-btn { flex: 1; min-width: 70px; padding: 10px; font-size: 13px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; font-weight: bold; }
+.markup-toolbar { display: flex; background: #f8f9fa; padding: 6px; gap: 4px; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
+.tool-btn { flex: 1; min-width: 60px; padding: 8px 4px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; font-weight: bold; }
 .tool-btn.active { background: #e74c3c; color: white; border-color: #c0392b; }
 .btn-del-img { background: #636e72; color: white; border: none; }
 
@@ -76,4 +57,3 @@ button { padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-
 .pdf-mode .no-print { display: none !important; }
 .pdf-mode .print-header { display: block !important; border-bottom: 3px solid #009444; margin-bottom: 20px; padding-bottom: 10px; }
 .pdf-mode section { background: white !important; border: 1px solid #eee; }
-.pdf-mode .markup-container { border: 1px solid #ccc; }
