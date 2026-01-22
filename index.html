@@ -3,17 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Solar Survey Pro - Multi-Image & Text Note</title>
+  <title>Solar Survey Pro - GP Solar (Integrated)</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
 </head>
 <body>
 
 <div class="container viewer-section no-print">
   <h2 style="margin-top:0; color:#1a5276;">📖 Nhập dữ liệu cũ (.json)</h2>
-  <input type="file" accept=".json" onchange="importData(this)">
+  <label class="btn-import-label">
+    📂 Chọn file JSON từ máy
+    <input type="file" accept=".json" onchange="importData(this)">
+  </label>
 </div>
 
 <div class="container" id="mainApp">
@@ -34,8 +38,8 @@
 
   <h1>📋 NHẬT KÝ KHẢO SÁT HIỆN TRƯỜNG</h1>
 
-  <form id="surveyForm">
-    <section>
+  <form id="surveyForm" onsubmit="event.preventDefault();">
+    <section class="box-section">
       <h2>⚡ 1. Thông số dòng điện (Ampe)</h2>
       <div class="field-group">
           <label>Loại hệ thống:</label>
@@ -50,34 +54,48 @@
       </div>
     </section>
 
-    <section>
-      <h2>🏗️ 2. Hình ảnh & Ghi chú (Chọn nhiều ảnh)</h2>
-      <div class="field-group">
-        <label>Vị trí lên mái & Lối đi:</label>
+    <section id="surveySections">
+      <div class="field-group box-section">
+        <h2>🏗️ 2. Hình Ảnh Tổng thể</h2>
         <input type="text" name="roofNote" placeholder="Ghi chú về lối đi...">
-        <input type="file" accept="image/*" capture="environment" class="no-print" onchange="handlePreview(this)" data-name="img_roof" multiple>
         <div id="area_img_roof" class="markup-wrapper"></div>
+        <div class="upload-zone no-print">
+          <label class="custom-file-upload">
+            <input type="file" accept="image/*" onchange="handlePreview(this)" data-name="img_roof" multiple>
+            📸 Thêm ảnh
+          </label>
+        </div>
       </div>
 
-      <div class="field-group">
-        <label>Vị trí lắp đặt Inverter:</label>
+      <div class="field-group box-section">
+        <h2>🔌 3. Vị trí lắp đặt Inverter</h2>
         <input type="text" name="invNote" placeholder="Ghi chú vị trí lắp...">
-        <input type="file" accept="image/*" capture="environment" class="no-print" onchange="handlePreview(this)" data-name="img_inv" multiple>
         <div id="area_img_inv" class="markup-wrapper"></div>
+        <div class="upload-zone no-print">
+          <label class="custom-file-upload">
+            <input type="file" accept="image/*" onchange="handlePreview(this)" data-name="img_inv" multiple>
+            📸 Thêm ảnh
+          </label>
+        </div>
       </div>
 
-      <div class="field-group">
-        <label>Điểm đấu nối điện tổng:</label>
+      <div class="field-group box-section">
+        <h2>📏 4. Ghi Chú Thêm</h2>
         <input type="text" name="meterNote" placeholder="Ghi chú điểm đấu nối...">
-        <input type="file" accept="image/*" capture="environment" class="no-print" onchange="handlePreview(this)" data-name="img_meter" multiple>
         <div id="area_img_meter" class="markup-wrapper"></div>
+        <div class="upload-zone no-print">
+          <label class="custom-file-upload">
+            <input type="file" accept="image/*" onchange="handlePreview(this)" data-name="img_meter" multiple>
+            📸 Thêm ảnh
+          </label>
+        </div>
       </div>
     </section>
 
     <div class="actions no-print">
-      <button type="submit" class="btn-save">💾 LƯU DỮ LIỆU TẠM</button>
-      <button type="button" class="btn-export" onclick="exportData()">📤 XUẤT FILE JSON</button>
-      <button type="button" class="btn-pdf" onclick="exportPDF()">📄 XUẤT PDF BÁO CÁO</button>
+      <button type="button" class="btn-export" onclick="exportData()">📤 XUẤT FILE JSON (Lưu trữ)</button>
+      <button type="button" class="btn-pdf" onclick="exportPDF()">📄 XUẤT BÁO CÁO PDF</button>
+      <button type="button" class="btn-docx" onclick="exportDOCX()">📝 XUẤT BÁO CÁO WORD</button>
     </div>
   </form>
 </div>
