@@ -5,8 +5,12 @@ const canvasStates = {};
 function togglePhase() {
   const phase = document.getElementById('phase').value;
   const container = document.getElementById('inputAmperage');
+  const options3Phase = document.getElementById('options3Phase');
+  
+  options3Phase.style.display = (phase === "3") ? "flex" : "none";
   container.innerHTML = '';
   const ids = phase === "1" ? ["1"] : ["A", "B", "C"];
+  
   ids.forEach(id => {
     const div = document.createElement('div');
     div.className = "box-section-sub";
@@ -22,12 +26,35 @@ function togglePhase() {
       </div>`;
     container.appendChild(div);
   });
+  calcPower();
 }
 
 function calcPower() {
-  let total = 0;
-  document.querySelectorAll('.amp-input').forEach(i => total += Number(i.value) || 0);
-  document.getElementById('instantPowerDisplay').innerText = ((total * 220) / 1000).toFixed(2);
+  const phase = document.getElementById('phase').value;
+  const inputs = document.querySelectorAll('.amp-input');
+  let totalAmps = 0;
+  inputs.forEach(i => totalAmps += Number(i.value) || 0);
+  
+  let power = 0;
+  let note = "";
+
+  if (phase === "1") {
+    power = (totalAmps * 220) / 1000;
+    note = "(Công thức: I x 220V)";
+  } else {
+    const loadType = document.getElementById('loadType').value;
+    if (loadType === "unbalanced") {
+      power = (totalAmps * 220) / 1000;
+      note = "(Tải lệch: Tổng Ampe các pha x 220V)";
+    } else {
+      const cosPhi = parseFloat(document.getElementById('cosPhi').value) || 0.9;
+      const avgAmp = totalAmps / 3;
+      power = (1.732 * 380 * avgAmp * cosPhi) / 1000;
+      note = `(√3 x 380V x I_tb x Cosφ ${cosPhi})`;
+    }
+  }
+  document.getElementById('instantPowerDisplay').innerText = power.toFixed(2);
+  document.getElementById('formulaNote').innerText = note;
 }
 
 // --- 2. XỬ LÝ HÌNH ẢNH & CANVAS ---
@@ -40,7 +67,7 @@ function handlePreview(input) {
     const uniqueId = categoryName + "_" + Date.now() + "_" + index;
     reader.onload = (e) => {
       const img = new Image();
-      img.onload = () => { createCanvasItem(area, uniqueId, img, categoryName); };
+      img.onload = () => { createCanvasItem(area, uniqueId, img, categoryName, null); };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
@@ -48,12 +75,14 @@ function handlePreview(input) {
   input.value = ""; 
 }
 
-function createCanvasItem(container, uniqueId, img, categoryName) {
+function createCanvasItem(container, uniqueId, img, categoryName, initialNote) {
     if (!container) return;
     const itemDiv = document.createElement('div');
     itemDiv.id = "item_" + uniqueId;
     itemDiv.className = "markup-container";
+    
     itemDiv.innerHTML = `
+      <input type="text" class="img-note-input no-print" placeholder="Ghi chú riêng cho ảnh này..." value="${initialNote || ''}" onchange="saveImgNote('${uniqueId}', this.value)">
       <div class="markup-toolbar no-print">
         <button type="button" class="tool-btn active" onclick="setTool('${uniqueId}','pen',this)">🖊️ Vẽ</button>
         <button type="button" class="tool-btn" onclick="setTool('${uniqueId}','arrow',this)">↔️ Mũi tên</button>
@@ -64,9 +93,13 @@ function createCanvasItem(container, uniqueId, img, categoryName) {
       </div>
       <div class="canvas-wrapper"><canvas id="canvas_${uniqueId}"></canvas></div>`;
     container.appendChild(itemDiv);
+    
     const canvas = document.getElementById(`canvas_${uniqueId}`);
     const ctx = canvas.getContext('2d');
-    const scale = Math.min(1, 1000 / img.width);
+    
+    // SCALE: Giới hạn chiều rộng 600px để gọn giao diện
+    const maxW = 600; 
+    const scale = Math.min(1, maxW / img.width);
     canvas.width = img.width * scale;
     canvas.height = img.height * scale;
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -75,10 +108,13 @@ function createCanvasItem(container, uniqueId, img, categoryName) {
         canvas, ctx, originalImg: img, 
         tool: 'pen', isDrawing: false, 
         category: categoryName,
+        note: initialNote || '', 
         history: [ctx.getImageData(0, 0, canvas.width, canvas.height)] 
     };
     setupDrawing(uniqueId);
 }
+
+function saveImgNote(id, value) { if(canvasStates[id]) canvasStates[id].note = value; }
 
 function setupDrawing(id) {
   const s = canvasStates[id];
@@ -91,20 +127,12 @@ function setupDrawing(id) {
   };
 
   const drawArrow = (ctx, x1, y1, x2, y2) => {
-    const headlen = 15; 
-    const angle = Math.atan2(y2 - y1, x2 - x1);
-    ctx.beginPath();
-    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    // Đầu 1
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 + headlen * Math.cos(angle + Math.PI / 6), y1 + headlen * Math.sin(angle + Math.PI / 6));
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 + headlen * Math.cos(angle - Math.PI / 6), y1 + headlen * Math.sin(angle - Math.PI / 6));
-    // Đầu 2
-    ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
-    ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+    const headlen = 15; const angle = Math.atan2(y2 - y1, x2 - x1);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.moveTo(x1, y1); ctx.lineTo(x1 + headlen * Math.cos(angle + Math.PI / 6), y1 + headlen * Math.sin(angle + Math.PI / 6));
+    ctx.moveTo(x1, y1); ctx.lineTo(x1 + headlen * Math.cos(angle - Math.PI / 6), y1 + headlen * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(x2, y2); ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(x2, y2); ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
     ctx.stroke();
   };
 
@@ -113,10 +141,9 @@ function setupDrawing(id) {
     if (s.tool === 'text') {
       const text = prompt("Nhập chữ:");
       if (text) {
-        const size = prompt("Nhập cỡ chữ (số):", "30");
+        const size = prompt("Cỡ chữ:", "30");
         s.ctx.fillStyle = "red"; s.ctx.font = `bold ${size}px Arial`;
-        s.ctx.fillText(text, p.x, p.y);
-        saveHistory(id);
+        s.ctx.fillText(text, p.x, p.y); saveHistory(id);
       }
       return;
     }
@@ -136,7 +163,6 @@ function setupDrawing(id) {
       else if (s.tool === 'arrow') drawArrow(s.ctx, s.startX, s.startY, p.x, p.y);
     }
   };
-
   const end = () => { if(s.isDrawing) { s.isDrawing = false; saveHistory(id); } };
 
   cv.addEventListener('mousedown', start); cv.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
@@ -167,16 +193,19 @@ function setTool(id, t, b) {
 function deleteImage(id) { if(confirm("Xóa ảnh?")) { document.getElementById("item_" + id).remove(); delete canvasStates[id]; } }
 
 // --- 3. XUẤT BÁO CÁO (PDF & WORD) ---
-
 async function exportPDF() {
   const btn = document.querySelector('.btn-pdf');
   const originalText = btn.innerText;
   btn.innerText = "⏳ ĐANG TẠO PDF..."; btn.disabled = true;
   const element = document.getElementById('mainApp');
   element.classList.add('pdf-mode');
+  
+  // Hiện ghi chú ảnh trong bản in PDF
+  document.querySelectorAll('.img-note-input').forEach(el => el.classList.remove('no-print'));
+
   window.scrollTo(0, 0);
   try {
-    const canvas = await html2canvas(element, { scale: 2, useCORS: true, allowTaint: false, backgroundColor: "#ffffff" });
+    const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
     const imgData = canvas.toDataURL('image/jpeg', 0.8);
     const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
     const imgWidth = 210; const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -186,40 +215,58 @@ async function exportPDF() {
     while (heightLeft > 0) { position = heightLeft - imgHeight; pdf.addPage(); pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight); heightLeft -= 297; }
     pdf.save(`Bao_Cao_Solar_${Date.now()}.pdf`);
   } catch (err) { alert("Lỗi xuất PDF: " + err.message); }
-  finally { element.classList.remove('pdf-mode'); btn.innerText = originalText; btn.disabled = false; }
+  finally { 
+      element.classList.remove('pdf-mode'); 
+      document.querySelectorAll('.img-note-input').forEach(el => el.classList.add('no-print'));
+      btn.innerText = originalText; btn.disabled = false; 
+  }
 }
 
 async function exportDOCX() {
     const btn = document.querySelector('.btn-docx');
     btn.innerText = "⏳ ĐANG TẠO WORD..."; btn.disabled = true;
     try {
-        const { Document, Packer, Paragraph, ImageRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType } = docx;
+        const { Document, Packer, Paragraph, ImageRun, HeadingLevel, AlignmentType, TextRun } = docx;
         const phase = document.getElementById('phase').value;
-        const notes = {}; document.querySelectorAll('input[type="text"], input[type="number"]').forEach(i => notes[i.name] = i.value);
+        const notes = {}; 
+        document.querySelectorAll('input[type="text"], input[type="number"], select').forEach(i => {
+            if(i.name && !i.classList.contains('img-note-input')) notes[i.name] = i.value;
+        });
         
         const docChildren = [
             new Paragraph({ text: "BÁO CÁO KHẢO SÁT HIỆN TRƯỜNG", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
             new Paragraph({ text: `Ngày khảo sát: ${new Date().toLocaleDateString('vi-VN')}`, alignment: AlignmentType.CENTER, spacing: { after: 300 } })
         ];
 
-        // Hàm hỗ trợ Section
         const addSect = (title, nKey, iKey) => {
             docChildren.push(new Paragraph({ text: title, heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }));
-            docChildren.push(new Paragraph({ text: `Ghi chú: ${notes[nKey] || ""}`, spacing: { after: 150 } }));
+            if(nKey && notes[nKey]) docChildren.push(new Paragraph({ text: `Ghi chú chung: ${notes[nKey]}`, spacing: { after: 150 } }));
+            
             for (let id in canvasStates) {
                 if (canvasStates[id].category === iKey) {
+                    if (canvasStates[id].note) {
+                        docChildren.push(new Paragraph({
+                            children: [ new TextRun({ text: `Ghi chú ảnh: ${canvasStates[id].note}`, italics: true, color: "555555" }) ],
+                            spacing: { before: 100, after: 50 }
+                        }));
+                    }
                     const buf = Uint8Array.from(atob(canvasStates[id].canvas.toDataURL('image/jpeg', 0.8).split(',')[1]), c => c.charCodeAt(0));
-                    docChildren.push(new Paragraph({ children: [new ImageRun({ data: buf, transformation: { width: 550, height: 350 } })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }));
+                    docChildren.push(new Paragraph({ children: [new ImageRun({ data: buf, transformation: { width: 500, height: 320 } })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }));
                 }
             }
         };
 
-        addSect("1. THÔNG SỐ ĐIỆN", "", ""); // Tiêu đề chung
+        let elecInfo = `Hệ thống: ${phase} Pha. `;
+        if (phase === "3") elecInfo += `Loại tải: ${notes['loadType'] === 'balanced' ? 'Cân bằng' : 'Không cân bằng'}. CosPhi: ${notes['cosPhi']}. `;
+        elecInfo += `Công suất tính toán: ${document.getElementById('instantPowerDisplay').innerText} kW`;
+        docChildren.push(new Paragraph({ text: "1. THÔNG SỐ ĐIỆN", heading: HeadingLevel.HEADING_2 }));
+        docChildren.push(new Paragraph({ text: elecInfo, spacing: { after: 200 } }));
+
         if(phase==="1") addSect("Đo đạc Pha 1", "ampere1", "img_amp1");
         else { addSect("Pha A", "ampereA", "img_ampA"); addSect("Pha B", "ampereB", "img_ampB"); addSect("Pha C", "ampereC", "img_ampC"); }
-        addSect("2. HÌNH ẢNH", "roofNote", "img_roof");
-        addSect("3. VỊ TRÍ INVERTER", "invNote", "img_inv");
-        addSect("4. GHI CHÚ THÊM", "meterNote", "img_meter");
+        addSect("2. HÌNH ẢNH TỔNG THỂ", "roofNote", "img_roof");
+        addSect("3. VỊ TRÍ LẮP INVERTER", "invNote", "img_inv");
+        addSect("4. GHI CHÚ KHÁC", "meterNote", "img_meter");
 
         const docObj = new Document({ sections: [{ children: docChildren }] });
         const blob = await Packer.toBlob(docObj);
@@ -230,12 +277,14 @@ async function exportDOCX() {
 
 // --- 4. IMPORT / EXPORT JSON ---
 function exportData() {
-  const data = { phase: document.getElementById('phase').value, notes: {}, images: {} };
-  document.querySelectorAll('input[type="text"], input[type="number"]').forEach(i => data.notes[i.name] = i.value);
+  const data = { notes: {}, images: {} };
+  document.querySelectorAll('input[type="text"], input[type="number"], select').forEach(i => {
+      if(i.name && !i.classList.contains('img-note-input')) data.notes[i.name] = i.value;
+  });
   for (let id in canvasStates) {
     const cat = canvasStates[id].category;
     if (!data.images[cat]) data.images[cat] = [];
-    data.images[cat].push(canvasStates[id].canvas.toDataURL('image/jpeg', 0.8));
+    data.images[cat].push({ data: canvasStates[id].canvas.toDataURL('image/jpeg', 0.8), note: canvasStates[id].note || '' });
   }
   saveAs(new Blob([JSON.stringify(data)], {type: "application/json"}), `Survey_${Date.now()}.json`);
 }
@@ -245,21 +294,30 @@ function importData(inp) {
   const reader = new FileReader();
   reader.onload = (e) => {
     const data = JSON.parse(e.target.result);
-    document.getElementById('phase').value = data.phase; togglePhase();
+    for (let k in data.notes) { 
+        const f = document.querySelector(`[name="${k}"]`); if(f) f.value = data.notes[k]; 
+    }
+    togglePhase(); 
     setTimeout(() => {
-        for (let k in data.notes) { const f = document.querySelector(`[name="${k}"]`); if(f) f.value = data.notes[k]; }
+        for (let k in data.notes) { 
+            const f = document.querySelector(`[name="${k}"]`); if(f) f.value = data.notes[k]; 
+        }
         calcPower();
         document.querySelectorAll('.markup-container').forEach(el => el.remove());
         for (let member in canvasStates) delete canvasStates[member];
         for (let cat in data.images) {
             const area = document.getElementById("area_" + cat);
-            if (area) data.images[cat].forEach((imgData, idx) => {
-                const img = new Image();
-                img.onload = () => createCanvasItem(area, cat + "_restored_" + idx, img, cat);
-                img.src = imgData;
-            });
+            if (area && Array.isArray(data.images[cat])) {
+                data.images[cat].forEach((imgObj, idx) => {
+                    const imgData = typeof imgObj === 'string' ? imgObj : imgObj.data;
+                    const imgNote = typeof imgObj === 'string' ? '' : imgObj.note;
+                    const img = new Image();
+                    img.onload = () => createCanvasItem(area, cat + "_restored_" + idx, img, cat, imgNote);
+                    img.src = imgData;
+                });
+            }
         }
-    }, 200);
+    }, 300);
   };
   reader.readAsText(inp.files[0]);
 }
